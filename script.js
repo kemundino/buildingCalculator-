@@ -1,10 +1,17 @@
 const display = document.getElementById("display");
 const memoryDisplay = document.getElementById("memory-display");
+const historyPanel = document.getElementById("history-panel");
+const historyList = document.getElementById("history-list");
 let memory = 0;
+let angleMode = 'deg'; // 'deg' or 'rad'
+let calculationHistory = [];
+let soundEnabled = true;
+let currentTheme = 'dark';
 
 // Function to append input to the display
 function appendToDisplay(value) {
   display.value += value;
+  playSound('click');
 }
 
 // Function to clear the display
@@ -56,8 +63,174 @@ function factorial() {
       result *= i;
     }
     display.value = result.toString();
+    playSound('calculate');
   } catch (error) {
     display.value = "Error";
+  }
+}
+
+// Function to generate random number
+function randomNumber() {
+  const randomVal = Math.random();
+  display.value += randomVal.toString();
+  playSound('click');
+}
+
+// Trigonometric dropdown toggle
+function toggleTrigDropdown() {
+  const dropdown = document.getElementById('trig-dropdown');
+  dropdown.classList.toggle('hidden');
+  playSound('click');
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function closeDropdown(e) {
+    if (!e.target.closest('.dropdown-container')) {
+      dropdown.classList.add('hidden');
+      document.removeEventListener('click', closeDropdown);
+    }
+  });
+}
+
+// Theme toggle
+function toggleTheme() {
+  const body = document.body;
+  const themeBtn = document.getElementById('theme-toggle');
+  
+  if (currentTheme === 'dark') {
+    body.classList.add('light-theme');
+    themeBtn.textContent = '☀️';
+    currentTheme = 'light';
+  } else {
+    body.classList.remove('light-theme');
+    themeBtn.textContent = '🌙';
+    currentTheme = 'dark';
+  }
+  playSound('click');
+}
+
+// History functions
+function toggleHistory() {
+  historyPanel.classList.toggle('hidden');
+  playSound('click');
+}
+
+function addToHistory(expression, result) {
+  const historyItem = {
+    expression: expression,
+    result: result,
+    timestamp: new Date().toLocaleTimeString()
+  };
+  
+  calculationHistory.unshift(historyItem);
+  if (calculationHistory.length > 10) {
+    calculationHistory.pop();
+  }
+  
+  updateHistoryDisplay();
+}
+
+function updateHistoryDisplay() {
+  historyList.innerHTML = '';
+  
+  calculationHistory.forEach(item => {
+    const historyElement = document.createElement('div');
+    historyElement.className = 'history-item';
+    historyElement.innerHTML = `
+      <div class="history-expression">${item.expression}</div>
+      <div class="history-result">= ${item.result}</div>
+      <div class="history-time">${item.timestamp}</div>
+    `;
+    historyElement.onclick = () => {
+      display.value = item.expression;
+      playSound('click');
+    };
+    historyList.appendChild(historyElement);
+  });
+}
+
+function clearHistory() {
+  calculationHistory = [];
+  updateHistoryDisplay();
+  playSound('click');
+}
+
+// Angle mode functions
+function setAngleMode(mode) {
+  angleMode = mode;
+  const degBtn = document.getElementById('deg-mode');
+  const radBtn = document.getElementById('rad-mode');
+  
+  if (mode === 'deg') {
+    degBtn.classList.add('active');
+    radBtn.classList.remove('active');
+  } else {
+    radBtn.classList.add('active');
+    degBtn.classList.remove('active');
+  }
+  playSound('click');
+}
+
+// Copy/Paste functions
+function copyResult() {
+  navigator.clipboard.writeText(display.value).then(() => {
+    display.value = 'Copied!';
+    setTimeout(() => {
+      display.value = '';
+    }, 1000);
+    playSound('success');
+  });
+}
+
+function pasteToDisplay() {
+  navigator.clipboard.readText().then(text => {
+    display.value += text;
+    playSound('click');
+  }).catch(() => {
+    display.value = 'Paste failed';
+    setTimeout(() => {
+      display.value = '';
+    }, 1000);
+  });
+}
+
+// Sound functions
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const soundBtn = document.getElementById('sound-btn');
+  soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  if (soundEnabled) playSound('click');
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  
+  // Create audio context for sound effects
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillatorator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillatorator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  switch(type) {
+    case 'click':
+      oscillatorator.frequency.value = 800;
+      gainNode.gain.value = 0.1;
+      oscillatorator.start();
+      oscillatorator.stop(audioContext.currentTime + 0.05);
+      break;
+    case 'calculate':
+      oscillatorator.frequency.value = 600;
+      gainNode.gain.value = 0.1;
+      oscillatorator.start();
+      oscillatorator.stop(audioContext.currentTime + 0.1);
+      break;
+    case 'success':
+      oscillatorator.frequency.value = 1000;
+      gainNode.gain.value = 0.1;
+      oscillatorator.start();
+      oscillatorator.stop(audioContext.currentTime + 0.15);
+      break;
   }
 }
 
@@ -117,6 +290,13 @@ function calculateResult() {
       throw new Error("Unbalanced parentheses");
     }
     
+    // Handle degree/radian conversion for trig functions
+    if (angleMode === 'deg') {
+      expression = expression.replace(/Math\.sin\(/g, 'Math.sin(' + (Math.PI/180) + ' * ');
+      expression = expression.replace(/Math\.cos\(/g, 'Math.cos(' + (Math.PI/180) + ' * ');
+      expression = expression.replace(/Math\.tan\(/g, 'Math.tan(' + (Math.PI/180) + ' * ');
+    }
+    
     // Evaluate the expression
     const result = eval(expression);
     
@@ -129,20 +309,30 @@ function calculateResult() {
         throw new Error("Infinity");
       }
       // Format large numbers in scientific notation
+      let resultStr;
       if (Math.abs(result) > 1e10) {
-        display.value = result.toExponential(6);
+        resultStr = result.toExponential(6);
       } else {
-        display.value = result.toString();
+        resultStr = result.toString();
       }
+      
+      // Add to history
+      addToHistory(display.value, resultStr);
+      display.value = resultStr;
     } else {
       display.value = result.toString();
     }
+    
+    playSound('calculate');
   } catch (error) {
     display.value = "Error";
+    display.classList.add('error');
+    playSound('error');
     setTimeout(() => {
       if (display.value === "Error") {
         display.value = "";
       }
+      display.classList.remove('error');
     }, 2000);
   }
 }
@@ -208,3 +398,4 @@ document.addEventListener("keydown", (event) => {
 
 // Initialize display
 updateMemoryDisplay();
+updateHistoryDisplay();

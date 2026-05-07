@@ -8,10 +8,28 @@
 </head>
 <body>
   <div class="calculator">
-    <h1>Scientific Calculator</h1>
+    <div class="header">
+      <h1>Scientific Calculator</h1>
+      <div class="controls">
+        <button id="theme-toggle" onclick="toggleTheme()" class="control-btn">🌙</button>
+        <button id="history-toggle" onclick="toggleHistory()" class="control-btn">📝</button>
+        <div class="angle-mode">
+          <button id="deg-mode" onclick="setAngleMode('deg')" class="angle-btn active">DEG</button>
+          <button id="rad-mode" onclick="setAngleMode('rad')" class="angle-btn">RAD</button>
+        </div>
+      </div>
+    </div>
     <div class="display-container">
       <input type="text" id="display" readonly>
       <input type="text" id="memory-display" readonly class="memory-display">
+    </div>
+    
+    <div id="history-panel" class="history-panel hidden">
+      <div class="history-header">
+        <h3>History</h3>
+        <button onclick="clearHistory()" class="clear-history">Clear</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
     </div>
     
     <div class="button-grid">
@@ -24,57 +42,84 @@
       <button onclick="deleteLast()" class="delete">DEL</button>
       
       <!-- Scientific Functions Row -->
-      <button onclick="appendToDisplay('Math.sin(')" class="scientific">sin</button>
-      <button onclick="appendToDisplay('Math.cos(')" class="scientific">cos</button>
-      <button onclick="appendToDisplay('Math.tan(')" class="scientific">tan</button>
+      <div class="dropdown-container">
+        <button onclick="toggleTrigDropdown()" class="scientific trig-dropdown">tri ▼</button>
+        <div id="trig-dropdown" class="dropdown-menu hidden">
+          <button onclick="appendToDisplay('Math.sin(')" class="dropdown-item">sin</button>
+          <button onclick="appendToDisplay('Math.cos(')" class="dropdown-item">cos</button>
+          <button onclick="appendToDisplay('Math.tan(')" class="dropdown-item">tan</button>
+          <button onclick="appendToDisplay('Math.asin(')" class="dropdown-item">asin</button>
+          <button onclick="appendToDisplay('Math.acos(')" class="dropdown-item">acos</button>
+          <button onclick="appendToDisplay('Math.atan(')" class="dropdown-item">atan</button>
+          <button onclick="appendToDisplay('Math.sinh(')" class="dropdown-item">sinh</button>
+          <button onclick="appendToDisplay('Math.cosh(')" class="dropdown-item">cosh</button>
+          <button onclick="appendToDisplay('Math.tanh(')" class="dropdown-item">tanh</button>
+          <button onclick="appendToDisplay('Math.asinh(')" class="dropdown-item">asinh</button>
+          <button onclick="appendToDisplay('Math.acosh(')" class="dropdown-item">acosh</button>
+          <button onclick="appendToDisplay('Math.atanh(')" class="dropdown-item">atanh</button>
+        </div>
+      </div>
       <button onclick="appendToDisplay('Math.log(')" class="scientific">log</button>
       <button onclick="appendToDisplay('Math.log10(')" class="scientific">log10</button>
       <button onclick="appendToDisplay('Math.exp(')" class="scientific">exp</button>
+      <button onclick="appendToDisplay('Math.pow(')" class="scientific">x^y</button>
+      <button onclick="appendToDisplay('Math.cbrt(')" class="scientific">∛</button>
+      <button onclick="factorial()" class="scientific">x!</button>
       
       <!-- More Scientific Functions -->
       <button onclick="appendToDisplay('Math.sqrt(')" class="scientific">√</button>
-      <button onclick="appendToDisplay('Math.pow(')" class="scientific">x^y</button>
-      <button onclick="appendToDisplay('Math.cbrt(')" class="scientific">∛</button>
       <button onclick="appendToDisplay('1/')" class="scientific">1/x</button>
       <button onclick="appendToDisplay('Math.abs(')" class="scientific">|x|</button>
-      <button onclick="factorial()" class="scientific">x!</button>
+      <button onclick="appendToDisplay('Math.floor(')" class="scientific">⌊x⌋</button>
+      <button onclick="appendToDisplay('Math.ceil(')" class="scientific">⌈x⌉</button>
+      <button onclick="appendToDisplay('Math.round(')" class="scientific">round</button>
+      
+      <!-- Advanced Functions -->
+      <button onclick="appendToDisplay(' % ')" class="scientific">mod</button>
+      <button onclick="randomNumber()" class="scientific">rand</button>
+      <button onclick="appendToDisplay('Math.sign(')" class="scientific">sgn</button>
+      <button onclick="appendToDisplay('(')" class="parenthesis">(</button>
+      <button onclick="appendToDisplay(')')" class="parenthesis">)</button>
+      <button onclick="appendToDisplay('%')" class="operator">%</button>
       
       <!-- Constants -->
       <button onclick="appendToDisplay('Math.PI')" class="constant">π</button>
       <button onclick="appendToDisplay('Math.E')" class="constant">e</button>
-      <button onclick="appendToDisplay('(')" class="parenthesis">(</button>
-      <button onclick="appendToDisplay(')')" class="parenthesis">)</button>
-      <button onclick="appendToDisplay('%')" class="operator">%</button>
       <button onclick="appendToDisplay('/')" class="operator">/</button>
+      <button onclick="appendToDisplay('*')" class="operator">×</button>
+      <button onclick="appendToDisplay('**')" class="operator">x^</button>
+      <button onclick="clearEntry()" class="clear">CE</button>
       
       <!-- Number Pad Row 1 -->
       <button onclick="appendToDisplay('7')" class="number">7</button>
       <button onclick="appendToDisplay('8')" class="number">8</button>
       <button onclick="appendToDisplay('9')" class="number">9</button>
-      <button onclick="appendToDisplay('*')" class="operator">×</button>
-      <button onclick="appendToDisplay('**')" class="operator">x^</button>
-      <button onclick="clearEntry()" class="clear">CE</button>
+      <button onclick="appendToDisplay('-')" class="operator">−</button>
+      <button onclick="appendToDisplay('+')" class="operator">+</button>
+      <button onclick="deleteLast()" class="delete">DEL</button>
       
       <!-- Number Pad Row 2 -->
       <button onclick="appendToDisplay('4')" class="number">4</button>
       <button onclick="appendToDisplay('5')" class="number">5</button>
       <button onclick="appendToDisplay('6')" class="number">6</button>
-      <button onclick="appendToDisplay('-')" class="operator">−</button>
-      <button onclick="appendToDisplay('Math.sinh(')" class="scientific">sinh</button>
-      <button onclick="appendToDisplay('Math.cosh(')" class="scientific">cosh</button>
+      <button onclick="copyResult()" class="control-btn">📋</button>
+      <button onclick="pasteToDisplay()" class="control-btn">📄</button>
+      <button onclick="toggleSound()" class="control-btn" id="sound-btn">🔊</button>
       
       <!-- Number Pad Row 3 -->
       <button onclick="appendToDisplay('1')" class="number">1</button>
       <button onclick="appendToDisplay('2')" class="number">2</button>
       <button onclick="appendToDisplay('3')" class="number">3</button>
-      <button onclick="appendToDisplay('+')" class="operator">+</button>
-      <button onclick="appendToDisplay('Math.tanh(')" class="scientific">tanh</button>
-      <button onclick="appendToDisplay('Math.asin(')" class="scientific">asin</button>
+      <button onclick="memoryClear()" class="memory">MC</button>
+      <button onclick="memoryRecall()" class="memory">MR</button>
+      <button onclick="memoryAdd()" class="memory">M+</button>
       
       <!-- Bottom Row -->
       <button onclick="appendToDisplay('0')" class="number zero">0</button>
       <button onclick="appendToDisplay('.')" class="number">.</button>
       <button onclick="toggleSign()" class="operator">+/−</button>
+      <button onclick="memorySubtract()" class="memory">M-</button>
+      <button onclick="clearDisplay()" class="clear">C</button>
       <button onclick="calculateResult()" class="equals">=</button>
     </div>
   </div>
